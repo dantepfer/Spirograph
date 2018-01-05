@@ -1,6 +1,6 @@
 import controlP5.*; //for slider
 import processing.pdf.*; //for outputting PDF
-
+import themidibus.*; 
 
 float r = 370;
 float a = 0;
@@ -15,6 +15,7 @@ int iterationsPerFrame = 4000; // can set this much lower than totalIterations i
 int totalIterations = 2000;
 boolean shouldDrawCompleteFigureEveryFrame = true; //if true iterationsPerFrame is always equal to totalIterations
 int iterations = 0;
+boolean showIterationSlider = false;
 boolean recordPDF = false;
 boolean isRecording = false;
 boolean needsRedraw = true;
@@ -25,12 +26,15 @@ float ztransY = 10;
 float scale = 1;
 float zscale = 1.1;
 
-boolean[] controls = new boolean[12];
+boolean[] controls = new boolean[12]; //keep track of what control key is pressed
 //0=q,1=a,2=w,3=s,4=e,5=d,6=left,7=up,8=right,9=down,10=zoom in,11=zoom out
 
 PGraphicsPDF pdf;
 ControlP5 cp5;
 Slider iterationSlider;
+MidiBus midiBusLaunchControl;  //Launch Control MIDI Device
+int midiControllerFaderNumbers[] = {41, 42, 43, 44, 45, 46, 47, 48}; //midi controller number for the faders 
+int midiControllerButtonNumbers[] = {1, 2, 3, 4, 5, 6, 7, 8}; //midi controller number for the buttons 
 
 void setup() {
   
@@ -56,6 +60,9 @@ void setup() {
   for (int i = 0; i < controls.length; i++) {
     controls[i] = false;
   }
+  
+  MidiBus.list();
+  midiBusLaunchControl = new MidiBus(this, "Launch Control", "");  
     
 }
 
@@ -95,11 +102,11 @@ void draw() {
    
     if (iterations++ < totalIterations){
       a = a+za;
-      vertex( r*tan(a), 
+      vertex( r*cos(a), 
               r*sin(a*t));
       
-      vertex( r*tan(a+d+t*a),
-              r*cos(a+d+t*a));
+      vertex( r*sin(a+d+t*a),
+              r*tan(a+d));
     }
     
   }
@@ -114,7 +121,7 @@ void draw() {
     println("ended PDF record after "+str(iterations)+" iterations");
   }
   
-  if(!isRecording){
+  if(!isRecording && showIterationSlider){
     cp5.draw(); 
   }
 
@@ -174,4 +181,37 @@ void controlEvent(ControlEvent theEvent) {
       }
       needsRedraw = true;
   }
+}
+
+void controllerChange(int channel, int number, int value) {
+  // Receive a controllerChange
+    if (number == midiControllerFaderNumbers[7]) {
+      totalIterations = int(10000.0*value/127.0);
+      if(shouldDrawCompleteFigureEveryFrame){
+        iterationsPerFrame = totalIterations;
+      }
+    }
+    if (number == midiControllerFaderNumbers[0]) {
+      zza = PI/180000.0*value/127.0;
+    }
+    if (number == midiControllerFaderNumbers[1]) {
+      zd = PI/180.0*value/127.0;
+    }
+    if (number == midiControllerFaderNumbers[2]) {
+      zt = PI/1800.0*value/127.0;
+    }
+    needsRedraw=true;
+}
+
+void mouseDragged(){
+   transX+=(mouseX-pmouseX)/scale;
+   transY+=(mouseY-pmouseY)/scale;
+   needsRedraw=true;
+}
+
+void mouseWheel(MouseEvent event) {
+  float e = event.getCount();
+  scale *= pow(zscale,-e/2);
+  needsRedraw=true;
+  
 }
