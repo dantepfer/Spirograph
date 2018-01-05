@@ -80,11 +80,11 @@ void draw() {
    
     if (iterations++ < totalIterations){
       a = a+za;
-      vertex( r*cos(a)+width/2, 
+      vertex( r*tan(a)+width/2, 
               r*sin(a)+height/2);
       
-      vertex( r*cos(a+d+t*a)+width/2,
-              r*sin(a+d+t*a)+height/2);
+      vertex( r*tan(a+d+t*a)+width/2,
+              r*tan(a+d+t*a)+height/2);
     }
     
   }
