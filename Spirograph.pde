@@ -23,7 +23,8 @@ float transX = 0;
 float transY = 0;
 float ztransX = 10;
 float ztransY = 10;
-float scale = 1;
+float scaleX = 1;
+float scaleY = 1;
 float zscale = 1.1;
 
 int drawMode = 0;
@@ -86,7 +87,7 @@ void draw() {
   }
   
   if (recordPDF && !isRecording) {
-    pdf = (PGraphicsPDF) createGraphics(width*2, height*2, PDF, "spiroPDFS/Spirograph za="+str(za)+", d="+str(d)+", t="+str(t)+", g="+str(t)+", mode="+str(drawMode)+".pdf");
+    pdf = (PGraphicsPDF) createGraphics(width*2, height*2, PDF, "spiroPDFS/Spirograph "+str(hour())+str(minute())+str(second())+" za="+str(za)+", d="+str(d)+", t="+str(t)+", g="+str(t)+", mode="+str(drawMode)+".pdf");
     beginRecord(pdf);
     isRecording = true;
     println("began PDF record");
@@ -97,9 +98,9 @@ void draw() {
   }
   
   pushMatrix();
-  scale(scale);
-  translate((width/2)/scale+transX,(height/2)/scale+transY);
-  strokeWeight(0.5/scale);
+  scale(scaleX,scaleY);
+  translate((width/2)/scaleX+transX,(height/2)/scaleY+transY);
+  strokeWeight(0.5/((scaleX+scaleY)/2));
   beginShape(LINES);
   for (int i=0; i<iterationsPerFrame; i++){
    
@@ -143,9 +144,8 @@ void keyPressed() {
   if (key == '/') {controls[10]=true;} 
   if (keyCode == ALT) {controls[11]=true;}
   if (key == 'p') {recordPDF = true; }
-  if (key == '-') {drawMode=constrain(drawMode-1,0,numModes-1);scale=1;transX=0;transY=0;}
-  if (key == '=') {drawMode=constrain(drawMode+1,0,numModes-1);scale=1;transX=0;transY=0;}
-  
+  if (key == '-') {drawMode=constrain(drawMode-1,0,numModes-1);reset();}
+  if (key == '=') {drawMode=constrain(drawMode+1,0,numModes-1);reset();}
 }
 
 void keyReleased() {
@@ -172,12 +172,12 @@ void applyControls() {
   if(controls[3]){d -= zd;}
   if(controls[4]){t += zt;}
   if(controls[5]){t -= zt;}
-  if(controls[6]){transX += ztransX/scale;}
-  if(controls[8]){transX -= ztransX/scale;}
-  if(controls[7]){transY += ztransY/scale;}
-  if(controls[9]){transY -= ztransY/scale;}
-  if(controls[10]){scale *= zscale;}
-  if(controls[11]){scale /= zscale;}
+  if(controls[6]){transX += ztransX/scaleX;}
+  if(controls[8]){transX -= ztransX/scaleX;}
+  if(controls[7]){transY += ztransY/scaleY;}
+  if(controls[9]){transY -= ztransY/scaleY;}
+  if(controls[10]){scaleX *= zscale;}
+  if(controls[11]){scaleX /= zscale;}
   if(controls[12]){g += zt;}
   if(controls[13]){g -= zt;}
 }
@@ -212,14 +212,21 @@ void controllerChange(int channel, int number, int value) {
 }
 
 void mouseDragged(){
-   transX+=(mouseX-pmouseX)/scale;
-   transY+=(mouseY-pmouseY)/scale;
+   transX+=(mouseX-pmouseX)/scaleX;
+   transY+=(mouseY-pmouseY)/scaleY;
    needsRedraw=true;
 }
 
 void mouseWheel(MouseEvent event) {
   float e = event.getCount();
-  scale *= pow(zscale,-e/2);
+  scaleX *= pow(zscale,-e/2);
+  scaleY *= pow(zscale,-e/2);
   needsRedraw=true;
-  
+}
+
+void reset(){
+  scaleX=1;
+  scaleY=1;
+  transX=0;
+  transY=0;
 }
