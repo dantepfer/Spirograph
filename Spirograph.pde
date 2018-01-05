@@ -26,6 +26,10 @@ float ztransY = 10;
 float scale = 1;
 float zscale = 1.1;
 
+float theta = 0;
+float ztheta = PI/300.0;
+boolean shouldRotate = false;
+
 boolean[] controls = new boolean[12]; //keep track of what control key is pressed
 //0=q,1=a,2=w,3=s,4=e,5=d,6=left,7=up,8=right,9=down,10=zoom in,11=zoom out
 
@@ -38,7 +42,7 @@ int midiControllerButtonNumbers[] = {1, 2, 3, 4, 5, 6, 7, 8}; //midi controller 
 
 void setup() {
   
-  fullScreen(P2D);
+  fullScreen(P3D);
   pixelDensity(displayDensity());
   //smooth();
   stroke(0);
@@ -69,6 +73,8 @@ void setup() {
 
 void draw() {
   
+  if(shouldRotate){theta+=ztheta;needsRedraw=true;}
+  
   applyControls();  
   if ((keyPressed | needsRedraw) && !recordPDF){
     background(255);
@@ -84,7 +90,7 @@ void draw() {
   
   if (recordPDF && !isRecording) {
     pdf = (PGraphicsPDF) createGraphics(width*2, height*2, PDF, "spiroPDFS/Spirograph za="+str(za)+", d="+str(d)+", t="+str(t)+".pdf");
-    beginRecord(pdf);
+    beginRaw(pdf);
     isRecording = true;
     println("began PDF record");
     background(255);
@@ -96,6 +102,7 @@ void draw() {
   pushMatrix();
   scale(scale);
   translate((width/2)/scale+transX,(height/2)/scale+transY);
+  rotateY(theta);
   strokeWeight(0.5/scale);
   beginShape(LINES);
   for (int i=0; i<iterationsPerFrame; i++){
@@ -103,10 +110,12 @@ void draw() {
     if (iterations++ < totalIterations){
       a = a+za;
       vertex( r*cos(a), 
-              r*sin(a*t));
+              r*sin(a*t),
+              r*cos(a+d));
       
       vertex( r*sin(a+d+t*a),
-              r*tan(a+d));
+              r*cos(a+d),
+              r*tan(a));
     }
     
   }
@@ -115,7 +124,7 @@ void draw() {
   
   
    if (recordPDF && iterations > totalIterations) {
-    endRecord();
+    endRaw();
     recordPDF = false;
     isRecording = false;
     println("ended PDF record after "+str(iterations)+" iterations");
@@ -199,6 +208,9 @@ void controllerChange(int channel, int number, int value) {
     }
     if (number == midiControllerFaderNumbers[2]) {
       zt = PI/1800.0*value/127.0;
+    }
+    if (number == midiControllerFaderNumbers[6]) {
+      theta = value/127.0*TWO_PI;
     }
     needsRedraw=true;
 }
