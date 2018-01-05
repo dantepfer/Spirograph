@@ -53,10 +53,10 @@ void drawVertices(int theDrawMode){
     break;
     
     case 7: //from "cool formulas"
-      vertex( r*cos(r), 
+      vertex( r*cos(r+k), 
               r*sin(e));
       vertex( r*cos(e),
-              r*sin(r));
+              r*sin(r+g));
     break;
     
     case 8: //from "spirograph B&W"

@@ -6,7 +6,7 @@ float r = 370;
 float a = 0;
 float za = 5*PI/180;
 float zza = PI/1800;
-float d = 60*PI/180;;
+float d = 60*PI/180;
 float zd=1*PI/180;
 float t=0;
 float zt=PI/1800;
@@ -192,7 +192,7 @@ void controlEvent(ControlEvent theEvent) {
 }
 
 void controllerChange(int channel, int number, int value) {
-  // Receive a controllerChange
+  // Receive a contr  ollerChange
     if (number == midiControllerFaderNumbers[7]) {
       totalIterations = int(10000.0*value/127.0);
       if(shouldDrawCompleteFigureEveryFrame){
