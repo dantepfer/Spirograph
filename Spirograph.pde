@@ -68,6 +68,7 @@ void setup() {
   MidiBus.list();
   midiBusLaunchControl = new MidiBus(this, "Launch Control", "");  
     
+  hint(ENABLE_DEPTH_SORT);
 }
 
 
@@ -115,7 +116,7 @@ void draw() {
       
       vertex( r*sin(a+d+t*a),
               r*cos(a+d),
-              r*tan(a));
+              r*sin(a));
     }
     
   }
