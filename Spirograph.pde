@@ -10,7 +10,7 @@ float d = 60*PI/180;;
 float zd=1*PI/180;
 float t=0;
 float zt=PI/1800;
-float e;
+float g=0;
 int iterationsPerFrame = 4000; // can set this much lower than totalIterations in order to have an animated effect (e.g. 60)
 int totalIterations = 2000;
 boolean shouldDrawCompleteFigureEveryFrame = true; //if true iterationsPerFrame is always equal to totalIterations
@@ -26,12 +26,11 @@ float ztransY = 10;
 float scale = 1;
 float zscale = 1.1;
 
-float theta = 0;
-float ztheta = PI/300.0;
-boolean shouldRotate = false;
+int drawMode = 0;
+int numModes = 12;
 
-boolean[] controls = new boolean[12]; //keep track of what control key is pressed
-//0=q,1=a,2=w,3=s,4=e,5=d,6=left,7=up,8=right,9=down,10=zoom in,11=zoom out
+boolean[] controls = new boolean[14]; //keep track of what control key is pressed
+//0=q,1=a,2=w,3=s,4=e,5=d,6=left,7=up,8=right,9=down,10=/,11=option out,12=r,13=f
 
 PGraphicsPDF pdf;
 ControlP5 cp5;
@@ -42,7 +41,7 @@ int midiControllerButtonNumbers[] = {1, 2, 3, 4, 5, 6, 7, 8}; //midi controller 
 
 void setup() {
   
-  fullScreen(P3D);
+  fullScreen(P2D);
   pixelDensity(displayDensity());
   //smooth();
   stroke(0);
@@ -68,13 +67,10 @@ void setup() {
   MidiBus.list();
   midiBusLaunchControl = new MidiBus(this, "Launch Control", "");  
     
-  hint(ENABLE_DEPTH_SORT);
 }
 
 
 void draw() {
-  
-  if(shouldRotate){theta+=ztheta;needsRedraw=true;}
   
   applyControls();  
   if ((keyPressed | needsRedraw) && !recordPDF){
@@ -86,12 +82,12 @@ void draw() {
   
   if(!isRecording && iterations<iterationsPerFrame) { //so as not to print more than once per render
     fill(0);
-    text("za:"+str(za*180/PI)+"    d:"+str(d*180/PI)+"    t:"+str(t*180/PI),20,20);
+    text("za:"+str(za*180/PI)+"  d:"+str(d*180/PI)+"  t:"+str(t*180/PI)+"  g:"+str(g*180/PI)+"  mode:"+str(drawMode),20,20);
   }
   
   if (recordPDF && !isRecording) {
-    pdf = (PGraphicsPDF) createGraphics(width*2, height*2, PDF, "spiroPDFS/Spirograph za="+str(za)+", d="+str(d)+", t="+str(t)+".pdf");
-    beginRaw(pdf);
+    pdf = (PGraphicsPDF) createGraphics(width*2, height*2, PDF, "spiroPDFS/Spirograph za="+str(za)+", d="+str(d)+", t="+str(t)+", g="+str(t)+", mode="+str(drawMode)+".pdf");
+    beginRecord(pdf);
     isRecording = true;
     println("began PDF record");
     background(255);
@@ -103,20 +99,13 @@ void draw() {
   pushMatrix();
   scale(scale);
   translate((width/2)/scale+transX,(height/2)/scale+transY);
-  rotateY(theta);
   strokeWeight(0.5/scale);
   beginShape(LINES);
   for (int i=0; i<iterationsPerFrame; i++){
    
     if (iterations++ < totalIterations){
       a = a+za;
-      vertex( r*cos(a), 
-              r*sin(a*t),
-              r*cos(a+d));
-      
-      vertex( r*sin(a+d+t*a),
-              r*cos(a+d),
-              r*sin(a));
+      drawVertices(drawMode);
     }
     
   }
@@ -125,7 +114,7 @@ void draw() {
   
   
    if (recordPDF && iterations > totalIterations) {
-    endRaw();
+    endRecord();
     recordPDF = false;
     isRecording = false;
     println("ended PDF record after "+str(iterations)+" iterations");
@@ -145,6 +134,8 @@ void keyPressed() {
   if (key == 's') {controls[3]=true;} 
   if (key == 'e') {controls[4]=true;} 
   if (key == 'd') {controls[5]=true;} 
+  if (key == 'r') {controls[12]=true;} 
+  if (key == 'f') {controls[13]=true;} 
   if (keyCode == LEFT) {controls[6]=true;} 
   if (keyCode == UP) {controls[7]=true;} 
   if (keyCode == RIGHT) {controls[8]=true;} 
@@ -152,6 +143,9 @@ void keyPressed() {
   if (key == '/') {controls[10]=true;} 
   if (keyCode == ALT) {controls[11]=true;}
   if (key == 'p') {recordPDF = true; }
+  if (key == '-') {drawMode=constrain(drawMode-1,0,numModes-1);scale=1;transX=0;transY=0;}
+  if (key == '=') {drawMode=constrain(drawMode+1,0,numModes-1);scale=1;transX=0;transY=0;}
+  
 }
 
 void keyReleased() {
@@ -161,6 +155,8 @@ void keyReleased() {
   if (key == 's') {controls[3]=false;} 
   if (key == 'e') {controls[4]=false;} 
   if (key == 'd') {controls[5]=false;} 
+  if (key == 'r') {controls[12]=false;} 
+  if (key == 'f') {controls[13]=false;} 
   if (keyCode == LEFT) {controls[6]=false;} 
   if (keyCode == UP) {controls[7]=false;} 
   if (keyCode == RIGHT) {controls[8]=false;} 
@@ -182,6 +178,8 @@ void applyControls() {
   if(controls[9]){transY -= ztransY/scale;}
   if(controls[10]){scale *= zscale;}
   if(controls[11]){scale /= zscale;}
+  if(controls[12]){g += zt;}
+  if(controls[13]){g -= zt;}
 }
 
 void controlEvent(ControlEvent theEvent) {
@@ -209,9 +207,6 @@ void controllerChange(int channel, int number, int value) {
     }
     if (number == midiControllerFaderNumbers[2]) {
       zt = PI/1800.0*value/127.0;
-    }
-    if (number == midiControllerFaderNumbers[6]) {
-      theta = value/127.0*TWO_PI;
     }
     needsRedraw=true;
 }
