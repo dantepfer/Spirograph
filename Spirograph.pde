@@ -1,8 +1,9 @@
 import controlP5.*; //for slider
 import processing.pdf.*; //for outputting PDF
 import themidibus.*; 
+import processing.sound.*;
 
-float r = 370;
+float r = 370; 
 float a = 0;
 float za = 5*PI/180;
 float zza = PI/1800;
@@ -42,6 +43,14 @@ MidiBus midiBusLaunchControl;  //Launch Control MIDI Device
 int midiControllerFaderNumbers[] = {41, 42, 43, 44, 45, 46, 47, 48}; //midi controller number for the faders 
 int midiControllerButtonNumbers[] = {1, 2, 3, 4, 5, 6, 7, 8}; //midi controller number for the buttons 
 
+AudioIn input;
+SoundFile sample;
+Amplitude rms;
+boolean reactToSoundInput = true; //sets whether we use mic input or not
+boolean useMicInput = false; //if false, use file
+float smooth_factor=0.25; // Declare a smooth factor (for smoothing the audio input amplitude)
+float amplitudeSum;
+
 void setup() {
   
   fullScreen(P2D); //try FX2D
@@ -69,13 +78,38 @@ void setup() {
   
   MidiBus.list();
   midiBusLaunchControl = new MidiBus(this, "Launch Control", "");  
-    
+  
+  //SOUND
+  // create a new Amplitude analyzer
+  rms = new Amplitude(this);
+  if(useMicInput){
+    //Create an Audio input and grab the 1st channel
+    input = new AudioIn(this, 0);
+    // start the Audio Input
+    input.start();
+    // Patch the input to the volume analyzer
+    rms.input(input); //see AmplitudeRMS example to see how to do this with a file
+  }else
+  {
+  //Load and play a soundfile and loop it
+  sample = new SoundFile(this, "beat.aiff");
+  sample.loop();
+  // Patch the sample to the volume analyzer
+  rms.input(sample); //see AmplitudeRMS example to see how to do this with a file
+  }
+
 }
 
 
 void draw() {
   
+  // redraw every frame when sound input is used
+  if(reactToSoundInput){
+    needsRedraw = true;    
+  }
+  
   applyControls();  
+  
   if ((keyPressed | needsRedraw) && !recordPDF){
     background(255);
     a=0;
@@ -109,7 +143,7 @@ void draw() {
    
     if (iterations++ < totalIterations){
       a = a+za;
-      drawVertices(drawMode);
+      drawVertices(drawMode, r, a, d, t, g);
     }
     
   }
@@ -149,6 +183,7 @@ void keyPressed() {
   if (key == 'p') {recordPDF = true; }
   if (key == '-') {drawMode=constrain(drawMode-1,0,numModes-1);reset();}
   if (key == '=') {drawMode=constrain(drawMode+1,0,numModes-1);reset();}
+  if (key == 'm') {reactToSoundInput = !reactToSoundInput;}
 }
 
 void keyReleased() {

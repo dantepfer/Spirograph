@@ -1,7 +1,17 @@
-void drawVertices(int theDrawMode){
-      float e = t*a;
-      float k = g*a;
-      float ad = a+d;
+void drawVertices(int theDrawMode, float r, float a, float d, float t, float g){
+
+  if (reactToSoundInput){
+    // smooth the rms data by smoothing factor
+    amplitudeSum += (rms.analyze() - amplitudeSum) * smooth_factor; 
+    //modify variables according to mic input
+    r = r + 360*(amplitudeSum-0.5);
+    d = d + 3*(amplitudeSum-0.5);
+  }
+      
+  float e = t*a;
+  float k = g*a;
+  float ad = a+d;
+      
   switch(theDrawMode){
     case 0: //original legit spirograph, with the e twist
       vertex( r*cos(a), 
