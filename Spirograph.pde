@@ -26,6 +26,8 @@ float ztransY = 10;
 float scaleX = 1;
 float scaleY = 1;
 float zscale = 1.1;
+float rotationZ;
+float lineWeight = 0.5;
 
 int drawMode = 0;
 int numModes = 12;
@@ -42,7 +44,7 @@ int midiControllerButtonNumbers[] = {1, 2, 3, 4, 5, 6, 7, 8}; //midi controller 
 
 void setup() {
   
-  fullScreen(P2D);
+  fullScreen(P2D); //try FX2D
   pixelDensity(displayDensity());
   //smooth();
   stroke(0);
@@ -100,7 +102,8 @@ void draw() {
   pushMatrix();
   scale(scaleX,scaleY);
   translate((width/2)/scaleX+transX,(height/2)/scaleY+transY);
-  strokeWeight(0.5/((scaleX+scaleY)/2));
+  rotate(rotationZ);
+  strokeWeight(lineWeight/((scaleX+scaleY)/2));
   beginShape(LINES);
   for (int i=0; i<iterationsPerFrame; i++){
    
@@ -207,6 +210,12 @@ void controllerChange(int channel, int number, int value) {
     }
     if (number == midiControllerFaderNumbers[2]) {
       zt = PI/1800.0*value/127.0;
+    }
+    if (number == midiControllerFaderNumbers[3]) {
+      lineWeight = value/127.0;
+    }
+    if (number == midiControllerFaderNumbers[6]) {
+      if(value == 0){rotationZ=0;}else{rotationZ = (value+1)/128.0*PI;} // so we can get PI/2 on the button
     }
     needsRedraw=true;
 }
